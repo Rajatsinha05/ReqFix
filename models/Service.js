@@ -46,6 +46,7 @@ const Service = sequelize.define(
   }
 );
 
+
 Service.beforeCreate((service) => {
   service.id = ulid();
 });

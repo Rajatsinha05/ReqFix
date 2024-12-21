@@ -14,8 +14,6 @@ exports.getAllServices = async (req, res) => {
 
 // Create a new service
 exports.createService = async (req, res) => {
-  
-
   try {
     const service = await Service.create(req.body);
     res.status(201).json(service);
@@ -77,5 +75,43 @@ exports.filterServices = async (req, res) => {
     res.status(200).json(services);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// Function to create multiple services
+exports.createMultipleServices = async (req, res) => {
+  try {
+    // Assuming `user.id` is available from authentication middleware
+    const userId = req.user.id;
+
+    // Get the array of services from the request body
+    const services = req.body.services;
+
+    if (!Array.isArray(services) || services.length === 0) {
+      return res.status(400).json({ message: "No services provided." });
+    }
+
+    // Append `user_id` to each service dynamically
+    const servicesWithUserId = services.map((service) => ({
+      ...service,
+      user_id: userId,
+    }));
+
+    // Create services in bulk
+    const createdServices = await Service.bulkCreate(servicesWithUserId, {
+      validate: true, // Ensures each service passes the model validations
+    });
+
+    res
+      .status(201)
+      .json({
+        message: "Services created successfully.",
+        data: createdServices,
+      });
+  } catch (error) {
+    console.error("Error creating services:", error);
+    res
+      .status(500)
+      .json({ message: "Error creating services.", error: error.message });
   }
 };
