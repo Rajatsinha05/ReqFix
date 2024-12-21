@@ -15,7 +15,9 @@ const UserAccount = sequelize.define(
     role: {
       type: DataTypes.ENUM("CUSTOMER", "SERVICE_PROVIDER", "ADMIN"),
       allowNull: false,
+      defaultValue: "CUSTOMER",
     },
+    gender: { type: DataTypes.STRING },
     contact_number: { type: DataTypes.STRING, allowNull: true },
     preferred_payment_method: { type: DataTypes.STRING, allowNull: true },
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },

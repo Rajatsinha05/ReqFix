@@ -21,7 +21,7 @@ const Service = sequelize.define(
     },
     description: { type: DataTypes.TEXT, allowNull: true },
     services_offered: { type: DataTypes.TEXT , allowNull: false },
-    price: {
+    price_range: {
       type: DataTypes.STRING,
       allowNull: false,
       

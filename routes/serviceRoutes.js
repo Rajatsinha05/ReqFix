@@ -19,5 +19,5 @@ router.get("/user/:userId", verifyToken, getServicesByUser); // Get services by 
 router.put("/:id", verifyToken, updateService); // Update a service by ID
 router.delete("/:id", verifyToken, deleteService); // Delete a service by ID
 router.get("/filter", filterServices); // Filter services by criteria
-router.post("/services/bulk", verifyToken, createMultipleServices);
+router.post("/bulk", verifyToken, createMultipleServices);
 module.exports = router;

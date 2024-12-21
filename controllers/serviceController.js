@@ -1,5 +1,5 @@
 const { Service, UserAccount } = require("../models");
-
+const { ulid } = require("ulid");
 // Get all services
 exports.getAllServices = async (req, res) => {
   try {
@@ -79,7 +79,11 @@ exports.filterServices = async (req, res) => {
 };
 
 // Function to create multiple services
+
+
 exports.createMultipleServices = async (req, res) => {
+  
+
   try {
     // Assuming `user.id` is available from authentication middleware
     const userId = req.user.id;
@@ -91,27 +95,28 @@ exports.createMultipleServices = async (req, res) => {
       return res.status(400).json({ message: "No services provided." });
     }
 
-    // Append `user_id` to each service dynamically
-    const servicesWithUserId = services.map((service) => ({
+    // Append `user_id` and generate `id` for each service
+    const servicesWithIds = services.map((service) => ({
       ...service,
+      id: ulid(), // Generate unique ID
       user_id: userId,
     }));
 
     // Create services in bulk
-    const createdServices = await Service.bulkCreate(servicesWithUserId, {
+    const createdServices = await Service.bulkCreate(servicesWithIds, {
       validate: true, // Ensures each service passes the model validations
     });
 
-    res
-      .status(201)
-      .json({
-        message: "Services created successfully.",
-        data: createdServices,
-      });
+    res.status(201).json({
+      message: "Services created successfully.",
+      data: createdServices,
+    });
   } catch (error) {
-    console.error("Error creating services:", error);
-    res
-      .status(500)
-      .json({ message: "Error creating services.", error: error.message });
+    
+    res.status(500).json({
+      message: "Error creating services.",
+      error: error.message,
+    });
   }
 };
+
