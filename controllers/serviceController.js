@@ -64,26 +64,24 @@ exports.deleteService = async (req, res) => {
 
 // Filter services by criteria
 exports.filterServices = async (req, res) => {
-  const { average_rating, verified } = req.query;
+  const { average_rating, verified, category } = req.query;
   const filters = {};
 
   if (average_rating) filters.average_rating = { [Op.gte]: average_rating };
   if (verified) filters.verified = verified === "true";
+  if (category) filters.category = { [Op.like]: `%${category}%` }; // Partial match for category
 
   try {
     const services = await Service.findAll({ where: filters });
     res.status(200).json(services);
   } catch (error) {
+    console.error("Error fetching filtered services:", error);
     res.status(500).json({ message: error.message });
   }
 };
-
 // Function to create multiple services
 
-
 exports.createMultipleServices = async (req, res) => {
-  
-
   try {
     // Assuming `user.id` is available from authentication middleware
     const userId = req.user.id;
@@ -112,7 +110,6 @@ exports.createMultipleServices = async (req, res) => {
       data: createdServices,
     });
   } catch (error) {
-    
     res.status(500).json({
       message: "Error creating services.",
       error: error.message,
@@ -120,3 +117,31 @@ exports.createMultipleServices = async (req, res) => {
   }
 };
 
+const { Op } = require("sequelize");
+
+// Filter services by category
+exports.getServicesByCategory = async (req, res) => {
+  const { category } = req.query;
+
+  try {
+    // Build filters dynamically
+    const filters = {};
+    if (category) {
+      filters.category = {
+        [Op.like]: `%${category}%`, // Use LIKE for partial matching
+      };
+    }
+
+    const services = await Service.findAll({
+      where: filters,
+      include: { model: UserAccount, as: "Provider" }, // Include provider details if needed
+    });
+
+    res.status(200).json(services);
+  } catch (error) {
+    console.error("Error fetching services by category:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching services.", error: error.message });
+  }
+};
