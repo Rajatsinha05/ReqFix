@@ -5,9 +5,11 @@ const JWT_SECRET = "Req-fix"; // Replace with the same secure key used in your c
 
 // Middleware to verify the token
 exports.verifyToken = (req, res, next) => {
+  
   try {
     // Get token from headers
     const token = req.headers.authorization?.split(" ")[1];
+    
 
     if (!token) {
       return res
@@ -24,6 +26,7 @@ exports.verifyToken = (req, res, next) => {
 
     next(); // Proceed to the next middleware or route handler
   } catch (error) {
+    
     return res.status(403).json({ message: "Invalid or expired token" });
   }
 };

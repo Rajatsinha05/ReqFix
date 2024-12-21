@@ -14,8 +14,8 @@ const { verifyToken } = require("../middlewares/authMiddleware");
 const router = express.Router();
 
 // Order Routes
-router.get("/", verifyToken, getAllOrders); // Get all orders
 router.post("/", verifyToken, createOrder); // Create a new order
+router.get("/", verifyToken, getAllOrders); // Get all orders
 router.get("/:id", verifyToken, getOrderById); // Get an order by ID
 router.put("/:id", verifyToken, updateOrder); // Update an order by ID
 // router.delete("/:id", verifyToken, deleteOrder); // Delete an order by ID

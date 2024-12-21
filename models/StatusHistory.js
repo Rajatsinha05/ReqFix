@@ -33,6 +33,7 @@ const StatusHistory = sequelize.define(
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
+    comment: { type: DataTypes.STRING },
   },
   {
     tableName: "status_history",

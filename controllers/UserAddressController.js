@@ -3,6 +3,8 @@ const { UserAddress, UserAccount, sequelize } = require("../models");
 // Add a new address for a user
 exports.addAddress = async (req, res) => {
   try {
+    req.body.user_id = req.user.id;
+
     const {
       user_id,
       address_line1,
@@ -35,8 +37,8 @@ exports.addAddress = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
-    // Start a transaction for atomic operations
-    const transaction = await sequelize.transaction();
+    // Use sequelize instance from the model
+    const transaction = await UserAddress.sequelize.transaction();
 
     try {
       // Update other addresses to not be primary if is_primary is true
@@ -47,21 +49,27 @@ exports.addAddress = async (req, res) => {
         );
       }
 
+      // Create the new address
       const newAddress = await UserAddress.create(
         { ...req.body },
         { transaction }
       );
+
+      // Commit the transaction
       await transaction.commit();
 
       res.status(201).json({ success: true, data: newAddress });
     } catch (error) {
+      // Rollback the transaction in case of an error
       await transaction.rollback();
       throw error;
     }
   } catch (error) {
+    console.error("Error adding address:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Get all addresses for a user
 exports.getUserAddresses = async (req, res) => {

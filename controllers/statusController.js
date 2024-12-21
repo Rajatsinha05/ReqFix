@@ -32,7 +32,8 @@ const getStatusHistoryByOrder = async (req, res) => {
 // Add a new status to an order
 const addStatus = async (req, res) => {
   const { orderId } = req.params;
-  const { status, changed_by, comment } = req.body;
+  const { status, comment } = req.body;
+  console.log('comment: ', comment,req.user.id);
 
   try {
     // Check if the order exists
@@ -45,7 +46,7 @@ const addStatus = async (req, res) => {
     const newStatus = await StatusHistory.create({
       order_id: orderId,
       status,
-      changed_by,
+      changed_by:req.user?.id,
       comment,
     });
 

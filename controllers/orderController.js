@@ -1,4 +1,4 @@
-const { Order, UserAccount, StatusHistory } = require("../models");
+const { Order, UserAccount, StatusHistory, Service } = require("../models");
 const { Op } = require("sequelize");
 
 // Get all orders
@@ -6,12 +6,39 @@ exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.findAll({
       include: [
-        { model: UserAccount, as: "Customer" },
-        { model: UserAccount, as: "ServiceProvider" },
+        {
+          model: UserAccount,
+          as: "Customer",
+          attributes: ["id", "full_name", "email"],
+        },
+        {
+          model: UserAccount,
+          as: "ServiceProvider",
+          attributes: ["id", "full_name", "email"],
+        },
+        {
+          model: StatusHistory,
+          as: "StatusHistories",
+          include: [
+            {
+              model: UserAccount,
+              as: "ChangedBy",
+              attributes: ["id", "full_name", "email"],
+            },
+          ],
+          attributes: ["id", "status", "changed_at", "comment"],
+        },
+        {
+          model: Service,
+          as: "Service",
+          
+        },
       ],
     });
+
     res.status(200).json(orders);
   } catch (error) {
+    console.error("Error fetching all orders:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -39,6 +66,7 @@ exports.createOrder = async (req, res) => {
     res.status(201).json(order);
   } catch (error) {
     await transaction.rollback();
+    console.error("Error creating order:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -48,17 +76,32 @@ exports.getOrderById = async (req, res) => {
   try {
     const order = await Order.findByPk(req.params.id, {
       include: [
-        { model: UserAccount, as: "Customer" },
-        { model: UserAccount, as: "ServiceProvider" },
+        {
+          model: UserAccount,
+          as: "Customer",
+          attributes: ["id", "full_name", "email"],
+        },
+        {
+          model: UserAccount,
+          as: "ServiceProvider",
+          attributes: ["id", "full_name", "email"],
+        },
         {
           model: StatusHistory,
+          as: "StatusHistories",
           include: [
             {
               model: UserAccount,
-              attributes: ["id", "name", "email"],
+              as: "ChangedBy",
+              attributes: ["id", "full_name", "email"],
             },
           ],
           attributes: ["id", "status", "changed_at", "comment"],
+        },
+        {
+          model: Service,
+          as: "Service",
+       
         },
       ],
     });
@@ -67,6 +110,7 @@ exports.getOrderById = async (req, res) => {
 
     res.status(200).json(order);
   } catch (error) {
+    console.error("Error fetching order by ID:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -80,32 +124,43 @@ exports.updateOrder = async (req, res) => {
     await order.update(req.body);
     res.status(200).json(order);
   } catch (error) {
+    console.error("Error updating order:", error);
     res.status(500).json({ message: error.message });
   }
 };
-
-// // Delete an order by ID
-// exports.deleteOrder = async (req, res) => {
-//   try {
-//     const order = await Order.findByPk(req.params.id);
-//     if (!order) return res.status(404).json({ message: "Order not found" });
-
-//     await order.destroy();
-//     res.status(200).json({ message: "Order deleted successfully" });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
 
 // Get orders by customer ID
 exports.getOrdersByCustomer = async (req, res) => {
   try {
     const orders = await Order.findAll({
       where: { customer_id: req.params.customerId },
-      include: { model: UserAccount, as: "ServiceProvider" },
+      include: [
+        {
+          model: UserAccount,
+          as: "Customer",
+          attributes: ["id", "full_name", "email"],
+        },
+        {
+          model: UserAccount,
+          as: "ServiceProvider",
+          attributes: ["id", "full_name", "email"],
+        },
+        {
+          model: StatusHistory,
+          as: "StatusHistories",
+          include: [
+            {
+              model: UserAccount,
+              as: "ChangedBy",
+              attributes: ["id", "full_name", "email"],
+            },
+          ],
+        },
+      ],
     });
     res.status(200).json(orders);
   } catch (error) {
+    console.error("Error fetching orders by customer:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -115,10 +170,21 @@ exports.getOrdersByServiceProvider = async (req, res) => {
   try {
     const orders = await Order.findAll({
       where: { service_provider_id: req.params.serviceProviderId },
-      include: { model: UserAccount, as: "Customer" },
+      include: [
+        {
+          model: UserAccount,
+          as: "Customer",
+          attributes: ["id", "full_name", "email"],
+        },
+        {
+          model: StatusHistory,
+          as: "StatusHistories",
+        },
+      ],
     });
     res.status(200).json(orders);
   } catch (error) {
+    console.error("Error fetching orders by service provider:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -126,24 +192,37 @@ exports.getOrdersByServiceProvider = async (req, res) => {
 // Filter orders by status
 exports.filterOrdersByStatus = async (req, res) => {
   const { status } = req.params;
-  if (
-    !["PENDING", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELED"].includes(
-      status
-    )
-  ) {
+  const validStatuses = [
+    "PENDING",
+    "ACCEPTED",
+    "IN_PROGRESS",
+    "COMPLETED",
+    "CANCELED",
+  ];
+
+  if (!validStatuses.includes(status)) {
     return res.status(400).json({ message: "Invalid order status" });
   }
 
   try {
     const orders = await Order.findAll({
-      include: [
-        { model: UserAccount, as: "Customer" },
-        { model: UserAccount, as: "ServiceProvider" },
-      ],
       where: { status },
+      include: [
+        {
+          model: UserAccount,
+          as: "Customer",
+          attributes: ["id", "full_name", "email"],
+        },
+        {
+          model: UserAccount,
+          as: "ServiceProvider",
+          attributes: ["id", "full_name", "email"],
+        },
+      ],
     });
     res.status(200).json(orders);
   } catch (error) {
+    console.error("Error filtering orders by status:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -152,24 +231,23 @@ exports.filterOrdersByStatus = async (req, res) => {
 exports.addStatusToOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { status, changed_by, comment } = req.body;
+    const { status, comment } = req.body;
 
-    // Check if the order exists
     const order = await Order.findByPk(orderId);
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Add a new status entry
     const newStatus = await StatusHistory.create({
       order_id: orderId,
       status,
-      changed_by,
+      changed_by: req.user.id,
       comment,
     });
 
     res.status(201).json(newStatus);
   } catch (error) {
+    console.error("Error adding status to order:", error);
     res.status(500).json({ message: error.message });
   }
 };
